@@ -48,11 +48,11 @@ def flip_keypoints(keypoints: np.ndarray,
         f'Options are {direction_options}')
 
     # swap the symmetric keypoint pairs
-    if direction == 'horizontal' or direction == 'vertical':
+    """if direction == 'horizontal' or direction == 'vertical':
         keypoints = keypoints.take(flip_indices, axis=ndim - 2)
         if keypoints_visible is not None:
             keypoints_visible = keypoints_visible.take(
-                flip_indices, axis=ndim - 2)
+                flip_indices, axis=ndim - 2)"""
 
     # flip the keypoints
     w, h = image_size

@@ -732,6 +732,7 @@ class RTMOHead(YOLOXPoseHead):
         # override to ensure consistency
         head_module_cfg['featmap_strides'] = featmap_strides
         head_module_cfg['num_keypoints'] = num_keypoints
+        head_module_cfg['num_classes'] = num_classes
 
         # build modules
         self.head_module = RTMOHeadModule(**head_module_cfg)
@@ -812,6 +813,7 @@ class RTMOHead(YOLOXPoseHead):
         extra_info = dict(num_samples=num_total_samples)
         losses = dict()
         cls_preds_all = flatten_cls_scores.view(-1, self.num_classes)
+        cls_target_all = torch.zeros_like(cls_preds_all).to(obj_targets)
 
         if num_pos > 0:
 
@@ -851,6 +853,7 @@ class RTMOHead(YOLOXPoseHead):
                 losses['loss_mle'] = self.loss_mle(pred_hms, target_hms,
                                                    vis_targets)
 
+
             if self.proxy_target_cc:
                 # form the regression target using the coordinate
                 # classification predictions
@@ -859,11 +862,8 @@ class RTMOHead(YOLOXPoseHead):
                     diff_reg = torch.norm(kpt_reg_preds - kpt_targets, dim=-1)
                     mask = (diff_reg > diff_cc).float()
                     kpt_weights_reg = vis_targets * mask
-                    oks = self.assigner.oks_calculator(kpt_cc_preds,
-                                                       kpt_targets,
-                                                       vis_targets, pos_areas)
-                    cls_targets = oks.unsqueeze(1)
-
+                    #oks = self.assigner.oks_calculator(kpt_cc_preds, kpt_tpgets, vis_targets, pos_areas)
+                    #cls_targets = oks.unsqueeze(1)
                 losses['loss_oks'] = self.loss_oks(kpt_reg_preds,
                                                    kpt_cc_preds.detach(),
                                                    kpt_weights_reg, pos_areas)
@@ -877,11 +877,11 @@ class RTMOHead(YOLOXPoseHead):
             # using predictions and assigned ground truth instances
             extra_info['overlaps'] = cls_targets
             cls_targets = cls_targets.pow(self.overlaps_power).detach()
-            obj_targets[pos_masks] = cls_targets.to(obj_targets)
+            cls_target_all[pos_masks] = cls_targets
 
         # 3.4 classification loss
-        losses['loss_cls'] = self.loss_cls(cls_preds_all, obj_targets,
-                                           obj_weights) / num_total_samples
+        losses['loss_cls'] = self.loss_cls(cls_preds_all, cls_target_all,
+                                            obj_weights) / num_total_samples        
         losses.update(extra_info)
 
         return losses

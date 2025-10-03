@@ -119,7 +119,7 @@ dataset_coco = dict(
 )
 
 train_dataloader = dict(
-    batch_size=32,
+    batch_size=4,
     num_workers=8,
     persistent_workers=True,
     pin_memory=True,
@@ -255,9 +255,10 @@ model = dict(
     head=dict(
         type='RTMOHead',
         num_keypoints=1,
+        num_classes=3,
         featmap_strides=(16, 32),
         head_module_cfg=dict(
-            num_classes=7,
+            num_classes=3,
             in_channels=256,
             cls_feat_channels=256,
             channels_per_group=36,
